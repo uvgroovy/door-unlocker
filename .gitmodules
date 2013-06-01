@@ -1,0 +1,6 @@
+[submodule "web"]
+	path = web
+	url = git://github.com/webpy/webpy.git
+[submodule "boto"]
+	path = boto
+	url = git://github.com/boto/boto.git

@@ -1,0 +1,76 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          servo
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Turns a servo!
+# Description:       Turns a servo!
+### END INIT INFO
+# -*- coding: utf-8 -*-
+# Debian init.d script for turning a servo!
+
+PIDDIR=/var/run/servo
+SERVER=/home/pi/servoserver/main.py
+PIDFILE=$PIDDIR/servo.pid
+NAME=servoserver
+DESC="Turns a servo"
+DAEMONUSER=root
+
+test -x $DAEMON || exit 0
+
+. /lib/lsb/init-functions
+
+server_start () {
+    if [ ! -d $PIDDIR ]; then
+        mkdir -p $PIDDIR
+        chown $DAEMONUSER $PIDDIR
+        chgrp $DAEMONUSER $PIDDIR
+    fi
+    
+    if [ -e $PIDFILE ]; then
+        if $0 status > /dev/null ; then
+          log_success_msg "$DESC already started; not starting."
+          return
+        else
+          log_success_msg "Removing stale PID file $PIDFILE."
+          rm -f $PIDFILE
+        fi
+    fi
+
+    log_daemon_msg "Starting $DESC" "$NAME"
+    start-stop-daemon --start --background --make-pidfile --quiet --pidfile=$PIDFILE --user $DAEMONUSER --exec $SERVER
+    log_end_msg $?
+}
+
+server_stop () {
+    log_daemon_msg "Stopping $DESC" "$NAME"
+    start-stop-daemon --stop --retry 5 --quiet --oknodo --pidfile $PIDFILE --user $DAEMONUSER
+    log_end_msg $?
+    rm -f $PIDFILE
+}
+
+case "$1" in
+   start)
+     server_start
+     ;;
+   stop)
+     server_stop
+     ;;
+   restart)
+     server_stop
+     server_start
+     ;;
+   status)
+    status_of_proc -p $PIDFILE $DAEMON $NAME && exit 0 || exit $?
+    ;;
+   *)
+     echo "Usage: /etc/init.d/tomcat {status|start|stop|restart}"
+     exit 1
+     ;;
+
+esac
+
+exit 0
+
